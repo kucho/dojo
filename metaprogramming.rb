@@ -1,6 +1,25 @@
+class BoundedArray < Array
+  def each(&block)
+    super do |thing|
+      thing.instance_eval(&block)
+    end
+  end
+end
+
 class Proxy
-  def initialize(thing, &block)
+  def self.for(instance, &block)
+    instance = new(instance)
+    # Setup proxy
+    instance.instance_exec(&block)
+    instance
+  end
+
+  attr_reader :thing
+  def initialize(thing)
     @thing = thing
+  end
+
+  def on_method_missing(&block)
     @on_method_missing = block
   end
 
@@ -19,28 +38,30 @@ class Thing
   end
 
   def is_a
-    thing = self
-
-    Proxy.new(thing) do |feature|
-      thing.create_method("#{feature}?") { true }
+    Proxy.for(self) do
+      on_method_missing do |name|
+        thing.create_method("#{name}?") { true }
+      end
     end
   end
 
   def is_not_a
-    thing = self
-
-    Proxy.new(thing) do |feature|
-      thing.create_method("#{feature}?") { false }
+    Proxy.for(self) do
+      on_method_missing do |name|
+        thing.create_method("#{name}?") { false }
+      end
     end
   end
 
   def is_the
-    thing = self
-
-    Proxy.new(thing) do |property_name|
-      Proxy.new(thing) do |property_value|
-        thing.create_method(property_name) { property_value }
-        thing
+    Proxy.for(self) do
+      on_method_missing do |property_name|
+        Proxy.for(thing) do
+          on_method_missing do |property_value|
+            thing.create_method(property_name) { property_value }
+            thing
+          end
+        end
       end
     end
   end
@@ -48,23 +69,17 @@ class Thing
   alias_method :being_the, :is_the
 
   def has(count)
-    thing = self
+    Proxy.for(self) do
+      on_method_missing do |property_name|
+        property_value = if count > 1
+          BoundedArray.new(count) { Thing.new(property_name) }
+        else
+          Thing.new(property_name)
+        end
 
-    Proxy.new(thing) do |property_name|
-      property_value = if count > 1
-        Class.new(Array) do
-          def each(&block)
-            super do |thing|
-              thing.instance_eval(&block)
-            end
-          end
-        end.new(count) { Thing.new(property_name) }
-      else
-        Thing.new(property_name)
+        thing.create_method(property_name) { property_value }
+        property_value
       end
-
-      thing.create_method(property_name) { property_value }
-      property_value
     end
   end
 
@@ -72,20 +87,19 @@ class Thing
   alias_method :with, :has
 
   def can
-    thing = self
+    Proxy.for(self) do
+      on_method_missing do |method_name, args, &method_block|
+        activity_name = args.first
+        activity_runs = []
+        thing.instance_variable_set("@#{activity_name}", activity_runs)
 
-    Proxy.new(thing) do |method_name, args, &method_block|
-      activity_name = args.first
-      activity_runs = []
-      thing.instance_variable_set("@#{activity_name}", activity_runs)
+        execute_and_record = ->(arg) do
+          activity_runs << instance_exec(arg, &method_block)
+        end
 
-      record_method = ->(arg) do
-        result = thing.instance_exec(arg, &method_block)
-        activity_runs << result
+        thing.create_method(method_name, &execute_and_record)
+        thing.create_method(activity_name) { activity_runs }
       end
-
-      thing.create_method(method_name, &record_method)
-      thing.create_method(args.first) { activity_runs }
     end
   end
 
@@ -126,9 +140,8 @@ puts jane.arms.first.hand.fingers.size # => 5
 # can define properties on nested items
 jane.has(1).head.having(2).eyes.each { being_the.color.blue.with(1).pupil.being_the.color.black }
 
-
 # can define methods
-jane.can.speak('spoke') do |phrase|
+jane.can.speak("spoke") do |phrase|
   "#{name} says: #{phrase}"
 end
 
