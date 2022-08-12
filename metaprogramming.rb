@@ -27,14 +27,14 @@ class Proxy
   def method_missing(symbol, *args, &block)
     @on_method_missing.call(symbol, args, &block)
   end
-  # rubocop:enable
+  # rubocop:enable Style/MissingRespondToMissing
 end
 
 class Thing
   attr_reader :name
 
   def initialize(name = nil)
-    @name = name
+    @name = name.to_s
   end
 
   def is_a
@@ -58,7 +58,7 @@ class Thing
       on_method_missing do |property_name|
         Proxy.for(thing) do
           on_method_missing do |property_value|
-            thing.create_method(property_name) { property_value }
+            thing.create_method(property_name) { property_value.to_s }
             thing
           end
         end
@@ -67,6 +67,7 @@ class Thing
   end
 
   alias_method :being_the, :is_the
+  alias_method :and_the, :is_the
 
   def has(count)
     Proxy.for(self) do
@@ -90,15 +91,20 @@ class Thing
     Proxy.for(self) do
       on_method_missing do |method_name, args, &method_block|
         activity_name = args.first
-        activity_runs = []
-        thing.instance_variable_set("@#{activity_name}", activity_runs)
 
-        execute_and_record = ->(arg) do
-          activity_runs << instance_exec(arg, &method_block)
+        if activity_name
+          activity_runs = []
+          thing.instance_variable_set("@#{activity_name}", activity_runs)
+
+          execute_and_record = ->(arg) do
+            activity_runs << instance_exec(arg, &method_block)
+          end
+
+          thing.create_method(method_name, &execute_and_record)
+          thing.create_method(activity_name) { activity_runs }
+        else
+          thing.create_method(method_name, &method_block)
         end
-
-        thing.create_method(method_name, &execute_and_record)
-        thing.create_method(activity_name) { activity_runs }
       end
     end
   end
