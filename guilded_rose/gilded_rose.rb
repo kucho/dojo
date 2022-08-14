@@ -2,6 +2,7 @@ require_relative "item"
 require_relative "inn_item"
 require_relative "aged_brie_item"
 require_relative "backstage_pass_item"
+require_relative "conjured_item"
 require_relative "legendary_item"
 
 class GildedRose
@@ -16,11 +17,11 @@ class GildedRose
       AgedBrieItem
     elsif item.name.include?("Backstage")
       BackstagePassItem
+    elsif item.name.include?("Conjured")
+      ConjuredItem
     else
       InnItem
     end
-
-    return item if klass == Item
 
     klass.new(item)
   end
