@@ -1,6 +1,7 @@
 require_relative "item"
 require_relative "inn_item"
 require_relative "aged_brie_item"
+require_relative "backstage_pass_item"
 require_relative "legendary_item"
 
 class GildedRose
@@ -13,6 +14,8 @@ class GildedRose
       LegendaryItem
     elsif item.name.include?("Aged")
       AgedBrieItem
+    elsif item.name.include?("Backstage")
+      BackstagePassItem
     else
       Item
     end
