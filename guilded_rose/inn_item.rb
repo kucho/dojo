@@ -20,4 +20,11 @@ class InnItem
   def sell_in=(val)
     item.sell_in = val
   end
+
+  def update_quality
+    delta = sell_in.positive? ? 1 : 2
+    new_quality = quality - delta
+    self.quality = new_quality.negative? ? 0 : new_quality
+    self.sell_in -= 1
+  end
 end
