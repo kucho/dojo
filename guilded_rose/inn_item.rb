@@ -1,3 +1,4 @@
+# This is our Item wrapper to use polymorphism.
 class InnItem
   attr_reader :item
 

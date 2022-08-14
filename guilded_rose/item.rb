@@ -1,4 +1,4 @@
-# DO NOT UPDATE
+# DO NOT UPDATE: We don't own this resource.
 class Item
   attr_accessor :name, :sell_in, :quality
 
