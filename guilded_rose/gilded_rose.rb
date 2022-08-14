@@ -1,4 +1,6 @@
 require_relative "item"
+require_relative "inn_item"
+require_relative "aged_brie_item"
 require_relative "legendary_item"
 
 class GildedRose
@@ -7,26 +9,27 @@ class GildedRose
   end
 
   def prepare(item)
-    return item if item.instance_of?(Item)
-
-    item_properties = [item.name, item.sell_in, item.quality]
-
     klass = if item.name.include?("Sulfuras")
       LegendaryItem
+    elsif item.name.include?("Aged")
+      AgedBrieItem
+    else
+      Item
     end
 
-    klass.new(*item_properties)
+    return item if klass == Item
+
+    klass.new(item)
   end
 
   # Open to modification
   def update_quality
     @items.each do |item|
       item = prepare(item)
-      case item
-      when LegendaryItem
-        item.update_quality
-      else
+      if item.instance_of?(Item)
         update_quality_old(item)
+      else
+        item.update_quality
       end
     end
   end
