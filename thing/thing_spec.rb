@@ -1,4 +1,4 @@
-require_relative "../metaprogramming"
+require_relative "thing"
 
 describe Thing do
   before(:each) do
