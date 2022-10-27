@@ -1,46 +1,61 @@
-class TennisGame1
-  def initialize(player1Name, player2Name)
-    @player1Name = player1Name
-    @player2Name = player2Name
-    @p1points = 0
-    @p2points = 0
+require "pry"
+
+module Tennis
+  class Game1
   end
 
-  def won_point(playerName)
-    if playerName == "player1"
-      @p1points += 1
-    else
-      @p2points += 1
+  class Player
+    def initialize(name:, points: 0)
+      @name = name
+      @points = points
     end
+
+    def won
+      @points += 1
+    end
+
+    attr_reader :name, :points
+  end
+end
+
+class TennisGame1
+  def initialize(player1_name, player2_name)
+    @players = []
+    @players << @player_1 = Tennis::Player.new(name: player1_name)
+    @players << @player_2 = Tennis::Player.new(name: player2_name)
+  end
+
+  def won_point(player_name)
+    player = find_player_by_name(player_name)
+    player.won
   end
 
   def score
     result = ""
-    tempScore = 0
-    if @p1points == @p2points
+    if @player_1.points == @player_2.points
       result = {
         0 => "Love-All",
         1 => "Fifteen-All",
         2 => "Thirty-All"
-      }.fetch(@p1points, "Deuce")
-    elsif (@p1points >= 4) || (@p2points >= 4)
-      minusResult = @p1points - @p2points
+      }.fetch(@player_1.points, "Deuce")
+    elsif (@player_1.points >= 4) || (@player_2.points >= 4)
+      minusResult = @player_1.points - @player_2.points
       result = if minusResult == 1
-        "Advantage player1"
+        "Advantage #{@player_1.name}"
       elsif minusResult == -1
-        "Advantage player2"
+        "Advantage #{@player_2.name}"
       elsif minusResult >= 2
-        "Win for player1"
+        "Win for #{@player_1.name}"
       else
-        "Win for player2"
+        "Win for #{@player_2.name}"
       end
     else
       (1...3).each do |i|
         if i == 1
-          tempScore = @p1points
+          tempScore = @player_1.points
         else
           result += "-"
-          tempScore = @p2points
+          tempScore = @player_2.points
         end
         result += {
           0 => "Love",
@@ -51,6 +66,12 @@ class TennisGame1
       end
     end
     result
+  end
+
+  private
+
+  def find_player_by_name(name)
+    @players.find { |p| p.name == name }
   end
 end
 
