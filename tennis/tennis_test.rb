@@ -1,6 +1,7 @@
 require "minitest"
 require "minitest/autorun"
 require_relative "tennis"
+require_relative "game_1/game_1"
 
 TEST_CASES = [
   [0, 0, "Love-All", "player1", "player2"],
@@ -65,7 +66,7 @@ class TestTennis < Minitest::Test
   def test_Score_Game1
     TEST_CASES.each do |testcase|
       (p1Points, p2Points, score, p1Name, p2Name) = testcase
-      game = play_game(TennisGame1, p1Points, p2Points, p1Name, p2Name)
+      game = play_game(Tennis::Game1, p1Points, p2Points, p1Name, p2Name)
       assert_equal(score, game.score)
     end
   end
