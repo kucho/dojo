@@ -31,44 +31,40 @@ class TennisGame1
   end
 
   def score
-    result = ""
-    if @player_1.points == @player_2.points
-      result = {
-        0 => "Love-All",
-        1 => "Fifteen-All",
-        2 => "Thirty-All"
-      }.fetch(@player_1.points, "Deuce")
-    elsif (@player_1.points >= 4) || (@player_2.points >= 4)
-      minusResult = @player_1.points - @player_2.points
-      result = if minusResult == 1
-        "Advantage #{@player_1.name}"
-      elsif minusResult == -1
-        "Advantage #{@player_2.name}"
-      elsif minusResult >= 2
-        "Win for #{@player_1.name}"
-      else
-        "Win for #{@player_2.name}"
-      end
-    else
-      (1...3).each do |i|
-        if i == 1
-          tempScore = @player_1.points
-        else
-          result += "-"
-          tempScore = @player_2.points
-        end
-        result += {
-          0 => "Love",
-          1 => "Fifteen",
-          2 => "Thirty",
-          3 => "Forty"
-        }[tempScore]
-      end
-    end
-    result
+    return draw_result if @player_1.points == @player_2.points
+    return ongoing_result unless (@player_1.points >= 4) || (@player_2.points >= 4)
+    matching_point_result
   end
 
   private
+
+  def matching_point_result
+    score_diff = @player_1.points - @player_2.points
+    leading_player = score_diff.positive? ? @player_1 : @player_2
+    condition = score_diff.abs == 1 ? "Advantage " : "Win for "
+    condition + leading_player.name
+  end
+
+  def ongoing_result
+    "#{score_label(@player_1.points)}-#{score_label(@player_2.points)}"
+  end
+
+  def score_label(score)
+    {
+      0 => "Love",
+      1 => "Fifteen",
+      2 => "Thirty",
+      3 => "Forty"
+    }[score]
+  end
+
+  def draw_result
+    {
+      0 => "Love-All",
+      1 => "Fifteen-All",
+      2 => "Thirty-All"
+    }.fetch(@player_1.points, "Deuce")
+  end
 
   def find_player_by_name(name)
     @players.find { |p| p.name == name }
